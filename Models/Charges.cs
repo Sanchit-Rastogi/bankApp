@@ -1,7 +1,7 @@
 ﻿using System;
 namespace BankApp.Models
 {
-    public class Charges
+    public class BankCharges
     {
         public int Id { get; set; }
 

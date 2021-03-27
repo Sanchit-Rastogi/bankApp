@@ -1,129 +1,75 @@
 ﻿using System;
 using BankApp.Models;
 using System.Collections.Generic;
-using System.Xml.Serialization;
-using System.IO;
 using BankApp.Services.Data;
 
 namespace BankApp.Services
 {
     public class UserLoginServices
     {
-        BankModel BankData = new BankModel();
+        //Fetch these data from the db
+        List<AccountHolder> AccountHolders = new List<AccountHolder>();
+        List<Employee> Employees = new List<Employee>();
 
-        public bool LoginUser(String role)
+        public bool LoginUser(string role, User inputUser)
         {
-            // Getting data from XML
-            XmlSerializer serializer = new XmlSerializer(typeof(BankModel));
-            FileStream fs = new FileStream("bankData.xml", FileMode.Open);
-            BankData = (BankModel)serializer.Deserialize(fs);
-
-            // Logging In User
-            Console.WriteLine("Enter your user name");
-            string name = Console.ReadLine();
-            Console.WriteLine("Enter your password");
-            string password = Console.ReadLine();
             if (role != "Emp")
             {
+                Random r = new Random();
                 AccountHolder accountHolder = new AccountHolder()
                 {
-                    Name = name,
-                    Password = password,
+                    Name = inputUser.Name,
+                    Password = inputUser.Password,
+                    Username = inputUser.Username,
+                    AccId = "AH" + inputUser.Name[..3] + r.Next(10000).ToString(),
                 };
-                AccountServices accountServices = new AccountServices();
-                bool flag = false;
-                foreach (var user in BankData.AccountHolders)
+                try
                 {
-                    flag = true;
-                    if (user.Name == name && user.Password == password)
-                    {
-                        accountServices.AccId = user.Id;
-                        Console.Clear();
-                        Console.WriteLine("User successfully logged In");
-                        return true;
-                    }
+                    var accHolder = AccountHolders.Find(e => e.Name == inputUser.Name && e.Password == inputUser.Password);
+                    if (accHolder != null) return true;
                     else
                     {
-                        accountHolder.Id = name[..3] + DateTime.Now.ToShortTimeString();
-                        accountHolder.AccId = BankData.Name[..3] + name[..3] + DateTime.Now.ToShortDateString();
-                        accountHolder.Balance = 0;
-                        BankData.AccountHolders.Add(accountHolder);
-                        SaveToXML();
-                        AddAccountHolderToDb(accountHolder);
-                        accountServices.AccId = accountHolder.AccId;
-                        Console.Clear();
-                        Console.WriteLine("New User successfully logged In");
+                        using (var db = new BankDBContext())
+                        {
+                            db.AccountHolders.Add(accountHolder);
+                            db.SaveChanges();
+                        }
                         return true;
                     }
                 }
-                if (!flag)
+                catch (Exception)
                 {
-                    accountHolder.Id = name[..3] + DateTime.Now.ToShortTimeString();
-                    accountHolder.AccId = BankData.Name[..3] + accountHolder.Name[..3] + DateTime.Now.ToShortDateString();
-                    accountHolder.Balance = 0;
-                    BankData.AccountHolders.Add(accountHolder);
-                    SaveToXML();
-                    AddAccountHolderToDb(accountHolder);
-                    accountServices.AccId = accountHolder.AccId;
-                    Console.Clear();
-                    Console.WriteLine("New User successfully logged In");
-                    return true;
+                    return false;
                 }
             }
             else
             {
+                Random r = new Random();
                 Employee loginEmployee = new Employee()
                 {
-                    Name = name,
-                    Password = password,
-                    EmployeeId = "EMP" + name[..3] + DateTime.Now.ToShortTimeString(),
+                    Name = inputUser.Name,
+                    Password = inputUser.Password,
+                    EmployeeId = "EMP" + inputUser.Name[..3] + r.Next(10000).ToString(),
                 };
-                foreach (var employee in BankData.Employees)
+                try
                 {
-                    if (employee.Name == name && employee.Password == password)
-                    {
-                        Console.Clear();
-                        Console.WriteLine("Employee successfully logged In");
-                        return true;
-                    }
+                    var employee = Employees.Find(e => e.Name == inputUser.Name && e.Password == inputUser.Password);
+                    if (employee != null) return true;
                     else
                     {
-                        BankData.Employees.Add(loginEmployee);
-                        SaveToXML();
-                        AddEmployeeToDb(loginEmployee);
-                        Console.Clear();
-                        Console.WriteLine("Employee successfully logged In");
+                        using (var db = new BankDBContext())
+                        {
+                            db.Employees.Add(loginEmployee);
+                            db.SaveChanges();
+                        }
                         return true;
                     }
                 }
+                catch (Exception)
+                {
+                    return false;
+                }
             }
-            return false;
-        }
-
-        public void AddAccountHolderToDb(AccountHolder accountHolder)
-        {
-            using (var db = new BankDBContext())
-            {
-                db.AccountHolders.Add(accountHolder);
-                db.SaveChanges();
-            }
-        }
-
-        public void AddEmployeeToDb(Employee employee)
-        {
-            using (var db = new BankDBContext())
-            {
-                db.Employees.Add(employee);
-                db.SaveChanges();
-            }
-        }
-
-        public void SaveToXML()
-        {
-            XmlSerializer serializer = new XmlSerializer(typeof(BankModel));
-            TextWriter writer = new StreamWriter("bankData.xml");
-            serializer.Serialize(writer, BankData);
-            writer.Close();
         }
     }
 }

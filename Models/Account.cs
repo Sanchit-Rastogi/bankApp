@@ -9,7 +9,7 @@ namespace BankApp.Models
 
         public decimal Balance { get; set; }
 
-        public List<Transaction> Transactions;
+        public List<Transaction> Transactions { get; set; }
 
         public AccountHolder()
         {
