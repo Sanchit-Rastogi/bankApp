@@ -2,15 +2,12 @@
 using BankApp.Models;
 using System.Collections.Generic;
 using BankApp.Services.Data;
+using System.Linq;
 
 namespace BankApp.Services
 {
     public class UserLoginServices
     {
-        //Fetch these data from the db
-        List<AccountHolder> AccountHolders = new List<AccountHolder>();
-        List<Employee> Employees = new List<Employee>();
-
         public bool LoginUser(string role, User inputUser)
         {
             if (role != "Emp")
@@ -25,16 +22,18 @@ namespace BankApp.Services
                 };
                 try
                 {
-                    var accHolder = AccountHolders.Find(e => e.Name == inputUser.Name && e.Password == inputUser.Password);
-                    if (accHolder != null) return true;
-                    else
+                    using (var db = new BankDBContext())
                     {
-                        using (var db = new BankDBContext())
+                        var accHolder = from acc in db.AccountHolders
+                                        where acc.Name == inputUser.Name && acc.Password == inputUser.Password
+                                        select acc;
+                        if (accHolder != null) return true;
+                        else
                         {
                             db.AccountHolders.Add(accountHolder);
                             db.SaveChanges();
+                            return true;
                         }
-                        return true;
                     }
                 }
                 catch (Exception)
@@ -53,16 +52,17 @@ namespace BankApp.Services
                 };
                 try
                 {
-                    var employee = Employees.Find(e => e.Name == inputUser.Name && e.Password == inputUser.Password);
-                    if (employee != null) return true;
-                    else
-                    {
-                        using (var db = new BankDBContext())
+                    using (var db = new BankDBContext()) {
+                        var employee = from emp in db.Employees
+                                        where emp.Name == inputUser.Name && emp.Password == inputUser.Password
+                                        select emp;
+                        if (employee != null) return true;
+                        else
                         {
                             db.Employees.Add(loginEmployee);
                             db.SaveChanges();
+                            return true;
                         }
-                        return true;
                     }
                 }
                 catch (Exception)

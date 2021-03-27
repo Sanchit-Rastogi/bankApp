@@ -20,7 +20,6 @@ namespace BankApplication
 
         public void DisplayMainMenu()
         {
-            //Console.Clear();
             Console.WriteLine("Welcome to The Bank Application Project \n \n");
             Console.WriteLine("Please enter option from the list :- \n");
             Console.WriteLine("1. Create a Bank");
@@ -162,7 +161,7 @@ namespace BankApplication
                     Console.WriteLine("Enter reciver account Id :- ");
                     txn.DestinationId = Convert.ToInt32(Console.ReadLine());
                     Console.WriteLine("Enter amount to be transfered :- ");
-                    txn.Amount = -Convert.ToInt32(Console.ReadLine());
+                    txn.Amount = Convert.ToInt32(Console.ReadLine());
                     Console.WriteLine("Enter note for transfer :- ");
                     txn.Note = Console.ReadLine();
                     txn.TxnDate = DateTime.Now;
@@ -181,7 +180,9 @@ namespace BankApplication
                     }
                     break;
                 case 4:
-                    List<Transaction> transactions = accountServices.DisplayTransactions();
+                    Console.WriteLine("Enter your account Id :- ");
+                    int id = Convert.ToInt32(Console.ReadLine());
+                    List<Transaction> transactions = accountServices.DisplayTransactions(id);
                     Console.WriteLine("TXN ID \t\t NOTE \t\t AMOUNT \t\t DATE");
                     foreach (var transaction in transactions)
                     {

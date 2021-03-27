@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using BankApp.Models;
 using BankApp.Services.Data;
+using System.Linq;
 
 namespace BankApp.Services
 {
@@ -17,9 +18,8 @@ namespace BankApp.Services
                     using (var db = new BankDBContext())
                     {
                         db.Transactions.Add(txn);
+                        db.AccountHolders.Find(txn.SourceId).Balance += txn.Amount;
                         db.SaveChanges();
-                        // Update account holder balance
-                        //accountHolder.Balance += amount;
                     }
                     return true;
                 }
@@ -39,9 +39,8 @@ namespace BankApp.Services
                 using (var db = new BankDBContext())
                 {
                     db.Transactions.Add(txn);
+                    db.AccountHolders.Find(txn.SourceId).Balance -= txn.Amount;
                     db.SaveChanges();
-                    // Update account holder balance
-                    //accountHolder.Balance -= amount;
                 }
                 return true;
 
@@ -52,13 +51,16 @@ namespace BankApp.Services
             }
         }
 
-        public List<Transaction> DisplayTransactions()
+        public List<Transaction> DisplayTransactions(int id)
         {
             try
             {
-                List<Transaction> AccTxn = new List<Transaction>();
-                // Fetch transactions for a user
-                return AccTxn;
+                using(var db = new BankDBContext())
+                {
+                    return (from txn in db.Transactions
+                           where txn.SourceId == id
+                           select txn).ToList();
+                }
             }
             catch (Exception) { return null; }
         }
@@ -71,9 +73,9 @@ namespace BankApp.Services
                 using (var db = new BankDBContext())
                 {
                     db.Transactions.Add(txn);
-                    // Update source balance
-                    // Update destination balance
-                    //accountHolder.Balance -= amount;
+                    db.AccountHolders.Find(txn.SourceId).Balance -= txn.Amount;
+                    db.AccountHolders.Find(txn.DestinationId).Balance += txn.Amount;
+                    db.SaveChanges();
                 }
                 return true;
 
