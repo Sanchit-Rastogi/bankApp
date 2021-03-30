@@ -2,11 +2,18 @@
 using BankApp.Services;
 using BankApp.Models;
 using System.Collections.Generic;
+using BankApp.Services.Utilities;
 
 namespace BankApplication
 {
     public class BankApplication
     {
+        Utility Utility;
+        BankServices BankServices;
+        User User;
+        UserServices UserServices;
+        AccountServices AccountServices;
+        BankCharges BankCharges;
 
         public BankApplication()
         {
@@ -15,32 +22,36 @@ namespace BankApplication
 
         public void Initialize()
         {
+            this.Utility = new Utility();
+            this.BankServices = new BankServices();
+            this.User = new User();
+            this.UserServices = new UserServices();
+            this.AccountServices = new AccountServices();
+            this.BankCharges = new BankCharges();
             DisplayMainMenu();
         }
 
         public void DisplayMainMenu()
         {
-            Console.WriteLine("Welcome to The Bank Application Project \n \n");
-            Console.WriteLine("Please enter option from the list :- \n");
-            Console.WriteLine("1. Create a Bank");
-            Console.WriteLine("2. Login for Staff / Account holder");
-            Console.WriteLine("3. Exit");
-            int option = Convert.ToInt32(Console.ReadLine());
-            BankServices bankServices = new BankServices();
+            int option = this.Utility.GetIntegerInput("Welcome to The Bank Application Project \n \n" +
+                " Please enter option from the list :- \n " +
+                "1. Create a Bank \n 2. Login \n 3. Exit");
             switch (option)
             {
                 case 1:
-                    Console.WriteLine("Registereing a new bank");
-                    Console.WriteLine("Enter your bank name");
-                    string name = Console.ReadLine();
-                    bool result = bankServices.RegisterBank(name);
-                    if (result) {
+                    string name = this.Utility.GetStringInput("Registereing a new bank \n Enter your bank name");
+                    bool isRegistered = this.BankServices.RegisterBank(name);
+                    if (isRegistered) {
                         Console.WriteLine("New Bank Successfully Created.");
                         DisplayMainMenu();
                     }
                     break;
                 case 2:
-                    DisplayLoginMenu();
+                    this.User = this.GetUserDetails();
+                    string loggedInStatus = this.UserServices.LoginUser(this.User);
+                    if (loggedInStatus == "AccountHolder") AccountHolderMenu();
+                    else if (loggedInStatus == "Employee") BankStaffMenu();
+                    else Console.WriteLine("Login error ! Please try again.");
                     break;
                 case 3:
                     Environment.Exit(0);
@@ -54,142 +65,51 @@ namespace BankApplication
 
         public User GetUserDetails()
         {
-            User user = new User();
-            Console.WriteLine("Enter your name");
-            user.Name = Console.ReadLine();
-            Console.WriteLine("Enter your username");
-            user.Username = Console.ReadLine();
-            Console.WriteLine("Enter your password");
-            user.Password = Console.ReadLine();
-            return user;
+            this.User.Name = this.Utility.GetStringInput("Enter your name");
+            this.User.Username = this.Utility.GetStringInput("Enter your username");
+            this.User.Password = this.Utility.GetStringInput("Enter your password");
+            return this.User;
         }
-
-        public void DisplayLoginMenu()
-        {
-            Console.Clear();
-            Console.WriteLine("Please enter option from the list :- \n");
-            Console.WriteLine("1. Login as a Account Holder");
-            Console.WriteLine("2. Login as a Employee");
-            Console.WriteLine("3. Go Back to main menu");
-            int option = Convert.ToInt32(Console.ReadLine());
-            UserLoginServices userLogin = new UserLoginServices();
-            switch (option)
-            {
-                case 1:
-                    User loginUser = GetUserDetails();
-                    bool result = userLogin.LoginUser("AH", loginUser);
-                    if (result) AccountHolderMenu();
-                    break;
-                case 2:
-                    User loginUser1 = GetUserDetails();
-                    bool result1 = userLogin.LoginUser("Emp", loginUser1);
-                    if (result1) BankStaffMenu();
-                    break;
-                case 3:
-                    Console.Clear();
-                    DisplayMainMenu();
-                    break;
-                default:
-                    Console.Clear();
-                    Console.WriteLine("Please select a valid option !!");
-                    DisplayLoginMenu();
-                    break;
-            }
-        } 
 
         public void AccountHolderMenu()
         {
-            AccountServices accountServices = new AccountServices();
-            Console.WriteLine("Hi! Welcome to the Account Holder menu :- \n");
-            Console.WriteLine("1. Deposite Money.");
-            Console.WriteLine("2. Withdraw Money");
-            Console.WriteLine("3. Transfer Funds");
-            Console.WriteLine("4. View Transaction History");
-            Console.WriteLine("5. Go back to main menu");
-            int option = Convert.ToInt32(Console.ReadLine());
-            Transaction txn = new Transaction();
+            Console.Clear();
+            int option = this.Utility.GetIntegerInput("Hi! Welcome to the Account Holder menu :- \n " +
+                "1. Deposite Money. \n " +
+                "2. Withdraw Money \n " +
+                "3. Transfer Funds \n " +
+                "4. View Transaction History \n " +
+                "5. Go back to main menu");
             switch (option)
             {
                 case 1:
-                    Console.WriteLine("Enter account Id :- ");
-                    txn.SourceId = Convert.ToInt32(Console.ReadLine());
-                    Console.WriteLine("Enter amount to be deposited :- ");
-                    txn.Amount = Convert.ToInt32(Console.ReadLine());
-                    txn.Note = "Made a deposte";
-                    txn.TxnDate = DateTime.Now;
-                    txn.DestinationId = txn.SourceId;
-                    bool result = accountServices.Deposite(txn);
-                    if (result)
-                    {
-                        Console.Clear();
-                        Console.WriteLine("Amount Successfully deposited");
-                        AccountHolderMenu();
-                    }
-                    else
-                    {
-                        Console.Clear();
-                        Console.WriteLine("Unable to deposite amount, Try again later !");
-                        AccountHolderMenu();
-                    }
+                    decimal depositeAmount = this.Utility.GetDecimalInput("Enter amount to be deposited :- ");
+                    bool isDeposited = this.AccountServices.Deposite(depositeAmount, this.User.Id);
+                    if (isDeposited) Console.WriteLine("Amount Successfully deposited");
+                    else Console.WriteLine("Unable to deposite amount, Try again later !");
+
+                    this.AccountHolderMenu();
                     break;
                 case 2:
-                    Console.WriteLine("Enter account Id :- ");
-                    txn.SourceId = Convert.ToInt32(Console.ReadLine());
-                    Console.WriteLine("Enter amount to be withdrawn :- ");
-                    txn.Amount = - Convert.ToInt32(Console.ReadLine());
-                    Console.WriteLine("Enter note for withdrawl :- ");
-                    txn.Note = Console.ReadLine();
-                    txn.TxnDate = DateTime.Now;
-                    txn.DestinationId = txn.SourceId;
-                    bool result1 = accountServices.Withdrawal(txn);
-                    if (result1)
-                    {
-                        Console.Clear();
-                        Console.WriteLine("Amount Successfully withdrawn");
-                        AccountHolderMenu();
-                    }
-                    else
-                    {
-                        Console.Clear();
-                        Console.WriteLine("Unable to withdraw amount, Try again later !");
-                        AccountHolderMenu();
-                    }
+                    decimal withdrawalAmount = this.Utility.GetDecimalInput("Enter amount to be withdrawn :- ");
+                    string note = this.Utility.GetStringInput("Enter note for withdrawl :- ");
+                    bool isWithdrawn = this.AccountServices.Withdrawal(withdrawalAmount, this.User.Id, note);
+                    if (isWithdrawn) Console.WriteLine("Amount Successfully withdrawn");
+                    else Console.WriteLine("Unable to withdraw amount, Try again later !");
+
+                    this.AccountHolderMenu();
                     break;
                 case 3:
-                    Console.WriteLine("Enter your account Id :- ");
-                    txn.SourceId = Convert.ToInt32(Console.ReadLine());
-                    Console.WriteLine("Enter reciver account Id :- ");
-                    txn.DestinationId = Convert.ToInt32(Console.ReadLine());
-                    Console.WriteLine("Enter amount to be transfered :- ");
-                    txn.Amount = Convert.ToInt32(Console.ReadLine());
-                    Console.WriteLine("Enter note for transfer :- ");
-                    txn.Note = Console.ReadLine();
-                    txn.TxnDate = DateTime.Now;
-                    bool result2 = accountServices.Transfer(txn);
-                    if (result2)
-                    {
-                        Console.Clear();
-                        Console.WriteLine("Amount Successfully transfered");
-                        AccountHolderMenu();
-                    }
-                    else
-                    {
-                        Console.Clear();
-                        Console.WriteLine("Unable to transfer amount, Try again later !");
-                        AccountHolderMenu();
-                    }
+                    this.TransferFundsMenu();
                     break;
                 case 4:
-                    Console.WriteLine("Enter your account Id :- ");
-                    int id = Convert.ToInt32(Console.ReadLine());
-                    List<Transaction> transactions = accountServices.DisplayTransactions(id);
+                    List<Transaction> transactions = this.AccountServices.DisplayTransactions(this.User.Id);
                     Console.WriteLine("TXN ID \t\t NOTE \t\t AMOUNT \t\t DATE");
                     foreach (var transaction in transactions)
                     {
                         Console.WriteLine($"{transaction.TxnId} \t\t {transaction.Note} \t\t {transaction.Amount} \t\t {transaction.TxnDate}");
                     }
-                    Console.WriteLine("");
-                    Console.WriteLine("Enter something to go back");
+                    Console.WriteLine("\n Enter something to go back");
                     String result3 = Console.ReadLine();
                     switch (result3)
                     {
@@ -210,6 +130,47 @@ namespace BankApplication
             }
         }
 
+        public void TransferFundsMenu()
+        {
+            Console.Clear();
+            int option = this.Utility.GetIntegerInput("Please select a tranfer option :- \n " +
+                "1. Same bank RTGS transfer. \n " +
+                "2. Same bank IMPS transfer. \n " +
+                "3. Other bank RTGS transfer. \n " +
+                "4. Other bank IMPS transfer \n " +
+                "5. Go back.");
+            int dstId = this.Utility.GetIntegerInput("Enter reciver account Id.");
+            decimal amt = this.Utility.GetDecimalInput("Enter amount to be tranfered.");
+            string note = this.Utility.GetStringInput("Enter transfer note.");
+            bool isTransfered = false;
+            switch (option)
+            {
+                case 1:
+                    isTransfered = this.AccountServices.Transfer(this.User.Id, dstId, amt, note, BankCharges.SameBankRTGSCharge);
+                    break;
+                case 2:
+                    isTransfered = this.AccountServices.Transfer(this.User.Id, dstId, amt, note, BankCharges.SameBankIMPSCharge);
+                    break;
+                case 3:
+                    string dstBankId = this.Utility.GetStringInput("Enter destination account bank Id.");
+                    isTransfered = this.AccountServices.OtherBankTransfer(this.User.Id, dstId, amt, note, BankCharges.DifferentBankRTGSCharge, dstBankId);
+                    break;
+                case 4:
+                    string dstBankId1 = this.Utility.GetStringInput("Enter destination account bank Id.");
+                    isTransfered = this.AccountServices.OtherBankTransfer(this.User.Id, dstId, amt, note, BankCharges.DifferentBankIMPSCharge, dstBankId1);
+                    break;
+                default:
+                    Console.Clear();
+                    Console.WriteLine("Please select a valid option !!");
+                    AccountHolderMenu();
+                    break;
+            }
+            if (isTransfered) Console.WriteLine("Amount successfully transfered");
+            else Console.WriteLine("Error occured ! Please try again");
+
+            AccountHolderMenu();
+        }
+
         public void BankStaffMenu()
         {
             Console.Clear();
@@ -222,11 +183,10 @@ namespace BankApplication
             Console.WriteLine("6. View transactions history.");
             Console.WriteLine("7. Revert a transaction.");
             int option = Convert.ToInt32(Console.ReadLine());
-            //BankStaffServices bankStaffServices = new BankStaffServices();
             switch (option)
             {
                 case 1:
-                    DisplayLoginMenu();
+                    //DisplayLoginMenu();
                     break;
                 case 2:
                     Console.WriteLine("Add service charges for this bank.");
