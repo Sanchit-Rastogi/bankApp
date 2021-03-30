@@ -7,10 +7,10 @@ namespace BankApp.Services.Constants
     {
         public static BankCharges BankCharges = new BankCharges
         {
-            SameBankIMPSCharge = 0,
-            SameBankRTGSCharge = 2,
-            DifferentBankIMPSCharge = 2,
-            DifferentBankRTGSCharge = 3,
+            SameBankIMPSCharge = 5,
+            SameBankRTGSCharge = 0,
+            DifferentBankIMPSCharge = 6,
+            DifferentBankRTGSCharge = 2,
         };
     }
 }

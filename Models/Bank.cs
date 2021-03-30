@@ -3,13 +3,11 @@ using System.Collections.Generic;
 
 namespace BankApp.Models
 {
-    public class BankModel
+    public class Bank
     {
         public string Id { get; set; }
 
         public string Name { get; set; }
-
-        public string DefaultCurrency { get; set; }
 
         public BankCharges BankCharges { get; set; }
 
@@ -19,7 +17,7 @@ namespace BankApp.Models
 
         public List<Currency> Currencies { get; set; }
 
-        public BankModel()
+        public Bank()
         {
             AccountHolders = new List<AccountHolder>();
             Employees = new List<Employee>();

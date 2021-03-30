@@ -10,5 +10,7 @@ namespace BankApp.Models
         public string Name { get; set; }
 
         public decimal ConversionRate { get; set; }
+
+        public decimal IsDefault { get; set; }
     }
 }

@@ -6,7 +6,7 @@ using System.Linq;
 
 namespace BankApp.Services
 {
-    public class UserLoginServices
+    public class UserServices
     {
         public bool LoginUser(string role, User inputUser)
         {

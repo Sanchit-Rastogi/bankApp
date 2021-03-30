@@ -16,7 +16,7 @@ namespace BankApp.Services.Data
             base.OnConfiguring(optionsBuilder);
         }
 
-        public DbSet<BankModel> Banks { get; set; }
+        public DbSet<Bank> Banks { get; set; }
 
         public DbSet<AccountHolder> AccountHolders { get; set; }
 
