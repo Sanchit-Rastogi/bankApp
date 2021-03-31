@@ -6,7 +6,7 @@ using System.Linq;
 
 namespace BankApp.Services
 {
-    public class AccountServices
+    public class AccountService
     {
         public Transaction CreateTransaction(int srcId, int dstId, decimal amt, string note)
         {

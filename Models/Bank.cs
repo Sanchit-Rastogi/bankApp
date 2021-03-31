@@ -9,7 +9,7 @@ namespace BankApp.Models
 
         public string Name { get; set; }
 
-        public BankCharges BankCharges { get; set; }
+        public BankCharge BankCharges { get; set; }
 
         public List<AccountHolder> AccountHolders { get; set; }
 
@@ -22,7 +22,7 @@ namespace BankApp.Models
             AccountHolders = new List<AccountHolder>();
             Employees = new List<Employee>();
             Currencies = new List<Currency>();
-            BankCharges = new BankCharges();
+            BankCharges = new BankCharge();
         }
     }
 }

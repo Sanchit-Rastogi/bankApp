@@ -5,7 +5,7 @@ namespace BankApp.Services.Constants
 {
     public class BankConstants
     {
-        public static BankCharges BankCharges = new BankCharges
+        public static BankCharge BankCharges = new BankCharge
         {
             SameBankIMPSCharge = 5,
             SameBankRTGSCharge = 0,

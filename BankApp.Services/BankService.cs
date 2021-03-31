@@ -5,7 +5,7 @@ using BankApp.Services.Data;
 
 namespace BankApp.Services
 {
-    public class BankServices
+    public class BankService
     {
        
         public bool RegisterBank(string name)

@@ -3,17 +3,18 @@ using BankApp.Services;
 using BankApp.Models;
 using System.Collections.Generic;
 using BankApp.Services.Utilities;
+using BankApp.Services.Constants;
 
 namespace BankApplication
 {
     public class BankApplication
     {
         Utility Utility;
-        BankServices BankServices;
+        BankService BankServices;
         User User;
-        UserServices UserServices;
-        AccountServices AccountServices;
-        BankCharges BankCharges;
+        UserService UserServices;
+        AccountService AccountServices;
+        AdminService AdminServices;
 
         public BankApplication()
         {
@@ -23,11 +24,11 @@ namespace BankApplication
         public void Initialize()
         {
             this.Utility = new Utility();
-            this.BankServices = new BankServices();
+            this.BankServices = new BankService();
             this.User = new User();
-            this.UserServices = new UserServices();
-            this.AccountServices = new AccountServices();
-            this.BankCharges = new BankCharges();
+            this.UserServices = new UserService();
+            this.AccountServices = new AccountService();
+            this.AdminServices = new AdminService();
             DisplayMainMenu();
         }
 
@@ -50,7 +51,7 @@ namespace BankApplication
                     this.User = this.GetUserDetails();
                     string loggedInStatus = this.UserServices.LoginUser(this.User);
                     if (loggedInStatus == "AccountHolder") AccountHolderMenu();
-                    else if (loggedInStatus == "Employee") BankStaffMenu();
+                    else if (loggedInStatus == "Employee") AdminMenu();
                     else Console.WriteLine("Login error ! Please try again.");
                     break;
                 case 3:
@@ -104,30 +105,32 @@ namespace BankApplication
                     break;
                 case 4:
                     List<Transaction> transactions = this.AccountServices.DisplayTransactions(this.User.Id);
-                    Console.WriteLine("TXN ID \t\t NOTE \t\t AMOUNT \t\t DATE");
-                    foreach (var transaction in transactions)
-                    {
-                        Console.WriteLine($"{transaction.TxnId} \t\t {transaction.Note} \t\t {transaction.Amount} \t\t {transaction.TxnDate}");
-                    }
-                    Console.WriteLine("\n Enter something to go back");
-                    String result3 = Console.ReadLine();
-                    switch (result3)
-                    {
-                        default:
-                            Console.Clear();
-                            AccountHolderMenu();
-                            break;
-                    }
+                    bool isSuccessfull = DisplayTransactions(transactions);
+                    if (isSuccessfull)
+                        AccountHolderMenu();
                     break;
                 case 5:
                     DisplayMainMenu();
                     break;
                 default:
-                    Console.Clear();
                     Console.WriteLine("Please select a valid option !!");
                     AccountHolderMenu();
                     break;
             }
+        }
+
+        public bool DisplayTransactions(List<Transaction> transactions)
+        {
+            Console.WriteLine("TXN ID \t\t NOTE \t\t AMOUNT \t\t DATE");
+            foreach (var transaction in transactions)
+            {
+                Console.WriteLine($"{transaction.TxnId} \t\t {transaction.Note} \t\t {transaction.Amount} \t\t {transaction.TxnDate}");
+            }
+            Console.WriteLine("\n Enter something to go back");
+            String result = Console.ReadLine();
+
+            if (result != null) return true;
+            else return false;
         }
 
         public void TransferFundsMenu()
@@ -146,21 +149,20 @@ namespace BankApplication
             switch (option)
             {
                 case 1:
-                    isTransfered = this.AccountServices.Transfer(this.User.Id, dstId, amt, note, BankCharges.SameBankRTGSCharge);
+                    isTransfered = this.AccountServices.Transfer(this.User.Id, dstId, amt, note, BankConstants.BankCharges.SameBankRTGSCharge);
                     break;
                 case 2:
-                    isTransfered = this.AccountServices.Transfer(this.User.Id, dstId, amt, note, BankCharges.SameBankIMPSCharge);
+                    isTransfered = this.AccountServices.Transfer(this.User.Id, dstId, amt, note, BankConstants.BankCharges.SameBankIMPSCharge);
                     break;
                 case 3:
                     string dstBankId = this.Utility.GetStringInput("Enter destination account bank Id.");
-                    isTransfered = this.AccountServices.OtherBankTransfer(this.User.Id, dstId, amt, note, BankCharges.DifferentBankRTGSCharge, dstBankId);
+                    isTransfered = this.AccountServices.OtherBankTransfer(this.User.Id, dstId, amt, note, BankConstants.BankCharges.DifferentBankRTGSCharge, dstBankId);
                     break;
                 case 4:
                     string dstBankId1 = this.Utility.GetStringInput("Enter destination account bank Id.");
-                    isTransfered = this.AccountServices.OtherBankTransfer(this.User.Id, dstId, amt, note, BankCharges.DifferentBankIMPSCharge, dstBankId1);
+                    isTransfered = this.AccountServices.OtherBankTransfer(this.User.Id, dstId, amt, note, BankConstants.BankCharges.DifferentBankIMPSCharge, dstBankId1);
                     break;
                 default:
-                    Console.Clear();
                     Console.WriteLine("Please select a valid option !!");
                     AccountHolderMenu();
                     break;
@@ -171,45 +173,107 @@ namespace BankApplication
             AccountHolderMenu();
         }
 
-        public void BankStaffMenu()
+        public void RegisterMenu()
         {
             Console.Clear();
-            Console.WriteLine("Hi! Welcome to the bank staff menu :- \n");
-            Console.WriteLine("1. Create a new account.");
-            Console.WriteLine("2. Update/Delete account.");
-            Console.WriteLine("3. Add new currency.");
-            Console.WriteLine("4. Add service charges for this bank.");
-            Console.WriteLine("5. Add service charge for other bank.");
-            Console.WriteLine("6. View transactions history.");
-            Console.WriteLine("7. Revert a transaction.");
-            int option = Convert.ToInt32(Console.ReadLine());
+            int option = this.Utility.GetIntegerInput("Please select an account type :- \n" +
+               " 1. Account holder account \n " +
+               " 2. Employee account. \n " +
+               " 3. Go Back");
+            bool isRegistered = false;
             switch (option)
             {
                 case 1:
-                    //DisplayLoginMenu();
+                    this.GetUserDetails();
+                    isRegistered = this.AdminServices.RegisterUser("AH", this.User);
                     break;
                 case 2:
-                    Console.WriteLine("Add service charges for this bank.");
+                    this.GetUserDetails();
+                    isRegistered = this.AdminServices.RegisterUser("EMP", this.User);
+                    break;
+                default:
+                    AdminMenu();
+                    break;
+            }
+            if (isRegistered) Console.WriteLine("User successfully registered");
+            else Console.WriteLine("Error occured ! Please try again.");
+
+            AdminMenu();
+        }
+
+        public void AdminMenu()
+        {
+            Console.Clear();
+            int option = this.Utility.GetIntegerInput("Hi! Welcome to the bank staff menu :- \n" +
+                " 1. Create a new account. \n " +
+                " 2. Update/Delete account. \n " +
+                " 3. Add new currency. \n " +
+                " 4. Add service charges for this bank. \n " +
+                " 5. Add service charge for other bank. \n " +
+                " 6. View transactions history. \n " +
+                " 7. Revert a transaction.");
+            switch (option)
+            {
+                case 1:
+                    RegisterMenu();
+                    break;
+                case 2:
+                    string accId = this.Utility.GetStringInput("Enter Transaction Id to be revereted.");
+                    bool isDeletedSuccessfully = this.AdminServices.RevertTransaction(accId);
+
+                    if (isDeletedSuccessfully) Console.WriteLine("Account successfully deleted.");
+                    else Console.WriteLine("Error occurred!, Please try again");
                     break;
                 case 3:
-                    Console.WriteLine("Add service charges for this bank.");
+                    string symbol = this.Utility.GetStringInput("Enter currency symbol.");
+                    string name = this.Utility.GetStringInput("Enter currency name.");
+                    decimal exchangeRate = this.Utility.GetDecimalInput("Enter currency exchange rate.");
+                    bool isAdded = this.AdminServices.AddNewCurrency(symbol, name, exchangeRate);
+
+                    if (isAdded) Console.WriteLine("New Currency successfully added");
+                    else Console.WriteLine("Error occurred!, Please try again");
+
+                    AdminMenu();
                     break;
                 case 4:
-                    Console.WriteLine("Add service charges for this bank.");
+                    int rtgs = this.Utility.GetIntegerInput("Enter RTGS charges : ");
+                    int imps = this.Utility.GetIntegerInput("Enter IMPS charges : ");
+                    bool isUpdated = this.AdminServices.EditSameBankCharges(rtgs, imps);
+
+                    if(isUpdated) Console.WriteLine("New Charges successfully added");
+                    else Console.WriteLine("Error occurred!, Please try again");
+
+                    AdminMenu();
                     break;
                 case 5:
-                    Console.WriteLine("Add service charge for other bank.");
+                    int rtgs1 = this.Utility.GetIntegerInput("Enter RTGS charges : ");
+                    int imps1 = this.Utility.GetIntegerInput("Enter IMPS charges : ");
+                    bool isUpdated1 = this.AdminServices.EditDiffBankCharges(rtgs1, imps1);
+
+                    if (isUpdated1) Console.WriteLine("New Charges successfully added");
+                    else Console.WriteLine("Error occurred!, Please try again");
+
+                    AdminMenu();
                     break;
                 case 6:
-                    Console.WriteLine("View transactions history.");
+                    List<Transaction> transactions = this.AdminServices.DisplayTransactions();
+                    bool isSuccessfull = this.DisplayTransactions(transactions);
+                    if (isSuccessfull)
+                        AdminMenu();
                     break;
                 case 7:
-                    Console.WriteLine("Revert a transaction.");
+                    string txnId = this.Utility.GetStringInput("Enter Transaction Id to be revereted.");
+                    bool isRevertedSuccessfully = this.AdminServices.RevertTransaction(txnId);
+
+                    if (isRevertedSuccessfully) Console.WriteLine("Transaction reverted successfully.");
+                    else Console.WriteLine("Error occurred!, Please try again");
+
+                    AdminMenu();
                     break;
                 default:
                     Console.Clear();
                     Console.WriteLine("Please select a valid option !!");
-                    BankStaffMenu();
+                    AdminMenu();
                     break;
             }
         }

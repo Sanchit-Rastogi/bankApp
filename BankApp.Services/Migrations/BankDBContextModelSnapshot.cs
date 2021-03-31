@@ -32,26 +32,40 @@ namespace BankApp.Services.Migrations
                     b.Property<decimal>("Balance")
                         .HasColumnType("decimal(18,2)");
 
-                    b.Property<string>("BankModelId")
+                    b.Property<string>("BankId")
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<string>("Name")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Password")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Username")
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int?>("UserId")
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("BankModelId");
+                    b.HasIndex("BankId");
+
+                    b.HasIndex("UserId");
 
                     b.ToTable("AccountHolders");
                 });
 
-            modelBuilder.Entity("BankApp.Models.BankCharges", b =>
+            modelBuilder.Entity("BankApp.Models.Bank", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int?>("BankChargesId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Name")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BankChargesId");
+
+                    b.ToTable("Banks");
+                });
+
+            modelBuilder.Entity("BankApp.Models.BankCharge", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -75,27 +89,6 @@ namespace BankApp.Services.Migrations
                     b.ToTable("BankCharges");
                 });
 
-            modelBuilder.Entity("BankApp.Models.BankModel", b =>
-                {
-                    b.Property<string>("Id")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<int?>("BankChargesId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("DefaultCurrency")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Name")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("BankChargesId");
-
-                    b.ToTable("Banks");
-                });
-
             modelBuilder.Entity("BankApp.Models.Currency", b =>
                 {
                     b.Property<int>("Id")
@@ -103,11 +96,14 @@ namespace BankApp.Services.Migrations
                         .HasColumnType("int")
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
-                    b.Property<string>("BankModelId")
+                    b.Property<string>("BankId")
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<decimal>("ConversionRate")
+                    b.Property<decimal>("ExchangeRate")
                         .HasColumnType("decimal(18,2)");
+
+                    b.Property<bool>("IsDefault")
+                        .HasColumnType("bit");
 
                     b.Property<string>("Name")
                         .HasColumnType("nvarchar(max)");
@@ -117,36 +113,22 @@ namespace BankApp.Services.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("BankModelId");
+                    b.HasIndex("BankId");
 
-                    b.ToTable("Currency");
+                    b.ToTable("Currencies");
                 });
 
             modelBuilder.Entity("BankApp.Models.Employee", b =>
                 {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
-
-                    b.Property<string>("BankModelId")
+                    b.Property<string>("EmployeeId")
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<string>("EmployeeId")
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<string>("BankId")
+                        .HasColumnType("nvarchar(450)");
 
-                    b.Property<string>("Name")
-                        .HasColumnType("nvarchar(max)");
+                    b.HasKey("EmployeeId");
 
-                    b.Property<string>("Password")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Username")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("BankModelId");
+                    b.HasIndex("BankId");
 
                     b.ToTable("Employees");
                 });
@@ -157,9 +139,6 @@ namespace BankApp.Services.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int")
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
-
-                    b.Property<int?>("AccountHolderId")
-                        .HasColumnType("int");
 
                     b.Property<decimal>("Amount")
                         .HasColumnType("decimal(18,2)");
@@ -181,21 +160,46 @@ namespace BankApp.Services.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("AccountHolderId");
-
                     b.ToTable("Transactions");
+                });
+
+            modelBuilder.Entity("BankApp.Models.User", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<string>("Name")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Password")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Username")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("User");
                 });
 
             modelBuilder.Entity("BankApp.Models.AccountHolder", b =>
                 {
-                    b.HasOne("BankApp.Models.BankModel", null)
+                    b.HasOne("BankApp.Models.Bank", null)
                         .WithMany("AccountHolders")
-                        .HasForeignKey("BankModelId");
+                        .HasForeignKey("BankId");
+
+                    b.HasOne("BankApp.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId");
+
+                    b.Navigation("User");
                 });
 
-            modelBuilder.Entity("BankApp.Models.BankModel", b =>
+            modelBuilder.Entity("BankApp.Models.Bank", b =>
                 {
-                    b.HasOne("BankApp.Models.BankCharges", "BankCharges")
+                    b.HasOne("BankApp.Models.BankCharge", "BankCharges")
                         .WithMany()
                         .HasForeignKey("BankChargesId");
 
@@ -204,31 +208,19 @@ namespace BankApp.Services.Migrations
 
             modelBuilder.Entity("BankApp.Models.Currency", b =>
                 {
-                    b.HasOne("BankApp.Models.BankModel", null)
+                    b.HasOne("BankApp.Models.Bank", null)
                         .WithMany("Currencies")
-                        .HasForeignKey("BankModelId");
+                        .HasForeignKey("BankId");
                 });
 
             modelBuilder.Entity("BankApp.Models.Employee", b =>
                 {
-                    b.HasOne("BankApp.Models.BankModel", null)
+                    b.HasOne("BankApp.Models.Bank", null)
                         .WithMany("Employees")
-                        .HasForeignKey("BankModelId");
+                        .HasForeignKey("BankId");
                 });
 
-            modelBuilder.Entity("BankApp.Models.Transaction", b =>
-                {
-                    b.HasOne("BankApp.Models.AccountHolder", null)
-                        .WithMany("Transactions")
-                        .HasForeignKey("AccountHolderId");
-                });
-
-            modelBuilder.Entity("BankApp.Models.AccountHolder", b =>
-                {
-                    b.Navigation("Transactions");
-                });
-
-            modelBuilder.Entity("BankApp.Models.BankModel", b =>
+            modelBuilder.Entity("BankApp.Models.Bank", b =>
                 {
                     b.Navigation("AccountHolders");
 

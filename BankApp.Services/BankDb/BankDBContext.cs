@@ -24,5 +24,9 @@ namespace BankApp.Services.Data
 
         public DbSet<Transaction> Transactions { get; set; }
 
+        public DbSet<Currency> Currencies { get; set; }
+
+        public DbSet<BankCharge> BankCharges { get; set; }
+
     }
 }

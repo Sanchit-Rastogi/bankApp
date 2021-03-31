@@ -3,7 +3,9 @@ namespace BankApp.Models
 {
     public class Employee
     {
-        public User User;
+        public int Id { get; set; }
+
+        public User User { get; set; }
 
         public string EmployeeId { get; set; }
 
