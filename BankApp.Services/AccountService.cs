@@ -6,38 +6,48 @@ using System.Linq;
 
 namespace BankApp.Services
 {
-    public class AccountService
+    public interface IAccountService
     {
-        public Transaction CreateTransaction(int sourceId, int destinationId, decimal amount, string note)
+        bool Deposite(decimal amount, int sourceAccountNumber);
+
+        bool Withdrawal(decimal amount, int sourceAccountNumber, string note);
+
+        List<Transaction> GetTransactions(int id);
+
+        bool Transfer(int sourceId, int destinationId, decimal amount, string note, int charge);
+    }
+
+    public class AccountService : IAccountService
+    {
+        private Transaction CreateTransaction(int sourceAccountNumber, int destinationAccountNumber, decimal amount, string note)
         {
             Transaction transaction = new Transaction
             {
-                TxnId = "TXN" + sourceId + DateTime.Now.ToShortTimeString(),
+                TxnId = "TXN" + sourceAccountNumber + DateTime.Now.ToShortTimeString(),
                 TxnDate = DateTime.Now,
-                SourceId = sourceId,
-                DestinationId = destinationId,
+                SourceId = sourceAccountNumber,
+                DestinationId = destinationAccountNumber,
                 Amount = amount,
                 Note = note,
-                IsRevereted = false,
             };
 
             return transaction;
         }
 
-        public bool Deposite(decimal amount, int sourceId)
+        public bool Deposite(decimal amount, int sourceAccountNumber)
         {
             var db = new BankDBContext();
 
             if (amount <= 0) return false;
         
-            var user = db.AccountHolders.SingleOrDefault(user => user.Id == sourceId);
+            var user = db.AccountHolders.SingleOrDefault(user => user.Id == sourceAccountNumber);
             if (user == null) return false;
 
             try
             { 
-                Transaction txn = CreateTransaction(sourceId, sourceId, amount, "Money deposited");
+                Transaction txn = CreateTransaction(sourceAccountNumber, sourceAccountNumber, amount, "Money deposited");
                 db.Transactions.Add(txn);
-                db.AccountHolders.Find(sourceId).Balance += amount;
+                user.Balance += amount;
                 db.SaveChanges();
             }
             catch (Exception)
@@ -48,20 +58,20 @@ namespace BankApp.Services
             return true;
         }
 
-        public bool Withdrawal(decimal amount, int sourceId, string note)
+        public bool Withdrawal(decimal amount, int sourceAccountNumber, string note)
         {
             var db = new BankDBContext();
 
-            if (db.AccountHolders.Find(sourceId).Balance < amount) return false;
+            if (db.AccountHolders.Find(sourceAccountNumber).Balance < amount) return false;
 
-            var user = db.AccountHolders.SingleOrDefault(user => user.Id == sourceId);
+            var user = db.AccountHolders.SingleOrDefault(user => user.Id == sourceAccountNumber);
             if (user == null) return false;
 
             try
             { 
-                Transaction transaction = CreateTransaction(sourceId, sourceId, -amount, note);
+                Transaction transaction = CreateTransaction(sourceAccountNumber, sourceAccountNumber, -amount, note);
                 db.Transactions.Add(transaction);
-                db.AccountHolders.Find(sourceId).Balance -= amount;
+                user.Balance -= amount;
                 db.SaveChanges();
             }
             catch (Exception)
@@ -72,7 +82,7 @@ namespace BankApp.Services
             return true;
         }
 
-        public List<Transaction> DisplayTransactions(int id)
+        public List<Transaction> GetTransactions(int id)
         {
             var db = new BankDBContext();
             var user = db.AccountHolders.SingleOrDefault(user => user.Id == id);
@@ -101,33 +111,7 @@ namespace BankApp.Services
                 decimal txnCharge = (amount * charge) / 100;
                 Transaction txn = CreateTransaction(sourceId, destinationId, amount, note);
                 db.Transactions.Add(txn);
-                db.AccountHolders.Find(sourceId).Balance -= (amount+txnCharge);
-                db.AccountHolders.Find(destinationId).Balance += amount;
-                db.SaveChanges();
-            }
-            catch (Exception)
-            {
-                return false;
-            }
-
-            return true;
-        }
-
-        public bool OtherBankTransfer(int sourceId, int destinationId, decimal amount, string note, int charge, string destinationBankId)
-        {
-            var db = new BankDBContext();
-
-            if (db.AccountHolders.Find(sourceId).Balance < amount) return false;
-
-            var user = db.AccountHolders.SingleOrDefault(user => user.Id == sourceId);
-            if (user == null) return false;
-
-            try
-            {
-                decimal txnCharge = (amount * charge) / 100;
-                Transaction txn = CreateTransaction(sourceId, destinationId, amount, note);
-                db.Transactions.Add(txn);
-                db.AccountHolders.Find(sourceId).Balance -= (amount + txnCharge);
+                user.Balance -= (amount+txnCharge);
                 db.AccountHolders.Find(destinationId).Balance += amount;
                 db.SaveChanges();
             }

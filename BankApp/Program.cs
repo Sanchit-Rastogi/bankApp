@@ -1,6 +1,5 @@
-﻿using System;
-using System.IO;
-using System.Xml.Serialization;
+﻿using BankApp;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BankApplication
 {
@@ -8,7 +7,10 @@ namespace BankApplication
     {
         static void Main(string[] args)
         {
-            new BankApplication();
+            var container = Startup.ConfigurationService();
+            var BankApp = container.GetRequiredService<IBankApp>();
+
+            BankApp.Initialize();
         }
     }
 }

@@ -10,7 +10,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace BankApp.Services.Migrations
 {
     [DbContext(typeof(BankDBContext))]
-    [Migration("20210331102157_Initial")]
+    [Migration("20210401133637_Initial")]
     partial class Initial
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -74,16 +74,16 @@ namespace BankApp.Services.Migrations
                         .HasColumnType("int")
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
-                    b.Property<int>("DifferentBankIMPSCharge")
+                    b.Property<int>("DifferentBankIMPS")
                         .HasColumnType("int");
 
-                    b.Property<int>("DifferentBankRTGSCharge")
+                    b.Property<int>("DifferentBankRTGS")
                         .HasColumnType("int");
 
-                    b.Property<int>("SameBankIMPSCharge")
+                    b.Property<int>("SameBankIMPS")
                         .HasColumnType("int");
 
-                    b.Property<int>("SameBankRTGSCharge")
+                    b.Property<int>("SameBankRTGS")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
@@ -122,15 +122,25 @@ namespace BankApp.Services.Migrations
 
             modelBuilder.Entity("BankApp.Models.Employee", b =>
                 {
-                    b.Property<string>("EmployeeId")
-                        .HasColumnType("nvarchar(450)");
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
                     b.Property<string>("BankId")
                         .HasColumnType("nvarchar(450)");
 
-                    b.HasKey("EmployeeId");
+                    b.Property<string>("EmployeeId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
 
                     b.HasIndex("BankId");
+
+                    b.HasIndex("UserId");
 
                     b.ToTable("Employees");
                 });
@@ -147,6 +157,9 @@ namespace BankApp.Services.Migrations
 
                     b.Property<int>("DestinationId")
                         .HasColumnType("int");
+
+                    b.Property<bool>("IsRevereted")
+                        .HasColumnType("bit");
 
                     b.Property<string>("Note")
                         .HasColumnType("nvarchar(max)");
@@ -220,6 +233,12 @@ namespace BankApp.Services.Migrations
                     b.HasOne("BankApp.Models.Bank", null)
                         .WithMany("Employees")
                         .HasForeignKey("BankId");
+
+                    b.HasOne("BankApp.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("BankApp.Models.Bank", b =>

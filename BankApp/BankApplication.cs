@@ -5,16 +5,37 @@ using System.Collections.Generic;
 using BankApp.Services.Utilities;
 using BankApp.Services.Constants;
 
-namespace BankApplication
+namespace BankApp
 {
-    public class BankApplication
+    public interface IBankApp
+    {
+        void Initialize();
+        void DisplayMainMenu();
+        User GetUserDetails();
+        void AccountHolderMenu();
+        bool DisplayTransactions(List<Transaction> transactions);
+        void TransferFundsMenu();
+        void RegisterMenu();
+        void AdminMenu();
+    }
+
+    public class BankApplication : IBankApp
     {
         Utility Utility;
-        BankService BankServices;
         User LoggedInUser;
-        UserService UserServices;
-        AccountService AccountServices;
-        AdminService AdminServices;
+
+        private readonly IBankService _bankService;
+        private readonly IAdminService _adminService;
+        private readonly IAccountService _accountService;
+        private readonly IUserService _userService;
+
+        public BankApplication(IBankService bankService, IUserService userService, IAccountService accountService, IAdminService adminService)
+        {
+            _bankService = bankService;
+            _accountService = accountService;
+            _adminService = adminService;
+            _userService = userService;
+        }
 
         public BankApplication()
         {
@@ -24,11 +45,7 @@ namespace BankApplication
         public void Initialize()
         {
             this.Utility = new Utility();
-            this.BankServices = new BankService();
             this.LoggedInUser = new User();
-            this.UserServices = new UserService();
-            this.AccountServices = new AccountService();
-            this.AdminServices = new AdminService();
             DisplayMainMenu();
         }
 
@@ -42,7 +59,8 @@ namespace BankApplication
                 case 1:
                     Console.WriteLine("*** Registereing a new bank *** ");
                     string name = this.Utility.GetStringInput("Enter your bank name : ");
-                    bool isRegistered = this.BankServices.RegisterBank(name);
+                    //bool isRegistered = this.BankServices.RegisterBank(name);
+                    bool isRegistered = this._bankService.RegisterBank(name);
                     if (isRegistered) {
                         Console.WriteLine("New Bank Successfully Created.");
                         DisplayMainMenu();
@@ -51,7 +69,7 @@ namespace BankApplication
                     break;
                 case 2:
                     var user = this.GetUserDetails();
-                    string loggedInStatus = this.UserServices.LoginUser(user);
+                    string loggedInStatus = this._userService.LoginUser(user);
                     if (loggedInStatus == "AccountHolder") {
                         this.LoggedInUser = user;
                         AccountHolderMenu();
@@ -93,14 +111,16 @@ namespace BankApplication
                 "2. Withdraw Money \n " +
                 "3. Transfer Funds \n " +
                 "4. View Transaction History \n " +
-                "5. Go back to main menu");
+                "5. Logout");
             switch (option)
             {
                 case 1:
                     decimal depositeAmount = this.Utility.GetDecimalInput("Enter amount to be deposited :- ");
-                    bool isDeposited = this.AccountServices.Deposite(depositeAmount, this.LoggedInUser.Id);
-                    if (isDeposited) Console.WriteLine("Amount Successfully deposited");
-                    else Console.WriteLine("Unable to deposite amount, Try again later !");
+                    bool isDeposited = this._accountService.Deposite(depositeAmount, this.LoggedInUser.Id);
+                    if (isDeposited)
+                        Console.WriteLine("Amount Successfully deposited");
+                    else
+                        Console.WriteLine("Unable to deposite amount, Try again later !");
 
                     this.AccountHolderMenu();
 
@@ -108,9 +128,11 @@ namespace BankApplication
                 case 2:
                     decimal withdrawalAmount = this.Utility.GetDecimalInput("Enter amount to be withdrawn :- ");
                     string note = this.Utility.GetStringInput("Enter note for withdrawl :- ");
-                    bool isWithdrawn = this.AccountServices.Withdrawal(withdrawalAmount, this.LoggedInUser.Id, note);
-                    if (isWithdrawn) Console.WriteLine("Amount Successfully withdrawn");
-                    else Console.WriteLine("Unable to withdraw amount, Try again later !");
+                    bool isWithdrawn = this._accountService.Withdrawal(withdrawalAmount, this.LoggedInUser.Id, note);
+                    if (isWithdrawn)
+                        Console.WriteLine("Amount Successfully withdrawn");
+                    else
+                        Console.WriteLine("Unable to withdraw amount, Try again later !");
 
                     this.AccountHolderMenu();
 
@@ -120,7 +142,7 @@ namespace BankApplication
 
                     break;
                 case 4:
-                    List<Transaction> transactions = this.AccountServices.DisplayTransactions(this.LoggedInUser.Id);
+                    List<Transaction> transactions = this._accountService.GetTransactions(this.LoggedInUser.Id);
                     bool isSuccessfull = DisplayTransactions(transactions);
                     if (isSuccessfull)
                         AccountHolderMenu();
@@ -161,28 +183,26 @@ namespace BankApplication
                 "3. Other bank RTGS transfer. \n " +
                 "4. Other bank IMPS transfer \n " +
                 "5. Go back.");
-            int dstId = this.Utility.GetIntegerInput("Enter reciver account Id.");
-            decimal amt = this.Utility.GetDecimalInput("Enter amount to be tranfered.");
+            int destinationAccountNumber = this.Utility.GetIntegerInput("Enter reciver account number.");
+            decimal amount = this.Utility.GetDecimalInput("Enter amount to be tranfered.");
             string note = this.Utility.GetStringInput("Enter transfer note.");
             bool isTransfered = false;
             switch (option)
             {
                 case 1:
-                    isTransfered = this.AccountServices.Transfer(this.LoggedInUser.Id, dstId, amt, note, BankConstants.BankCharges.SameBankRTGSCharge);
+                    isTransfered = this._accountService.Transfer(this.LoggedInUser.Id, destinationAccountNumber, amount, note, BankConstants.BankCharges.SameBankRTGS);
 
                     break;
                 case 2:
-                    isTransfered = this.AccountServices.Transfer(this.LoggedInUser.Id, dstId, amt, note, BankConstants.BankCharges.SameBankIMPSCharge);
+                    isTransfered = this._accountService.Transfer(this.LoggedInUser.Id, destinationAccountNumber, amount, note, BankConstants.BankCharges.SameBankIMPS);
 
                     break;
                 case 3:
-                    string dstBankId = this.Utility.GetStringInput("Enter destination account bank Id.");
-                    isTransfered = this.AccountServices.OtherBankTransfer(this.LoggedInUser.Id, dstId, amt, note, BankConstants.BankCharges.DifferentBankRTGSCharge, dstBankId);
+                    isTransfered = this._accountService.Transfer(this.LoggedInUser.Id, destinationAccountNumber, amount, note, BankConstants.BankCharges.DifferentBankRTGS);
 
                     break;
                 case 4:
-                    string dstBankId1 = this.Utility.GetStringInput("Enter destination account bank Id.");
-                    isTransfered = this.AccountServices.OtherBankTransfer(this.LoggedInUser.Id, dstId, amt, note, BankConstants.BankCharges.DifferentBankIMPSCharge, dstBankId1);
+                    isTransfered = this._accountService.Transfer(this.LoggedInUser.Id, destinationAccountNumber, amount, note, BankConstants.BankCharges.DifferentBankIMPS);
 
                     break;
                 default:
@@ -191,8 +211,10 @@ namespace BankApplication
 
                     break;
             }
-            if (isTransfered) Console.WriteLine("Amount successfully transfered");
-            else Console.WriteLine("Error occured ! Please try again");
+            if (isTransfered)
+                Console.WriteLine("Amount successfully transfered");
+            else
+                Console.WriteLine("Error occured ! Please try again");
 
             AccountHolderMenu();
         }
@@ -209,12 +231,12 @@ namespace BankApplication
             {
                 case 1:
                     this.GetUserDetails();
-                    isRegistered = this.UserServices.RegisterUser("AH", this.LoggedInUser);
+                    isRegistered = this._userService.RegisterUser("AH", this.LoggedInUser);
 
                     break;
                 case 2:
                     this.GetUserDetails();
-                    isRegistered = this.UserServices.RegisterUser("EMP", this.LoggedInUser);
+                    isRegistered = this._userService.RegisterUser("EMP", this.LoggedInUser);
 
                     break;
                 default:
@@ -222,8 +244,10 @@ namespace BankApplication
 
                     break;
             }
-            if (isRegistered) Console.WriteLine("User successfully registered");
-            else Console.WriteLine("Error occured ! Please try again.");
+            if (isRegistered)
+                Console.WriteLine("User successfully registered");
+            else
+                Console.WriteLine("Error occured ! Please try again.");
 
             AdminMenu();
         }
@@ -247,20 +271,24 @@ namespace BankApplication
                     break;
                 case 2:
                     string accId = this.Utility.GetStringInput("Enter Transaction Id to be revereted.");
-                    bool isDeletedSuccessfully = this.UserServices.DeleteAccount(accId);
+                    bool isDeletedSuccessfully = this._userService.DeleteAccount(accId);
 
-                    if (isDeletedSuccessfully) Console.WriteLine("Account successfully deleted.");
-                    else Console.WriteLine("Error occurred!, Please try again");
+                    if (isDeletedSuccessfully)
+                        Console.WriteLine("Account successfully deleted.");
+                    else
+                        Console.WriteLine("Error occurred!, Please try again");
 
                     break;
                 case 3:
                     string symbol = this.Utility.GetStringInput("Enter currency symbol.");
                     string name = this.Utility.GetStringInput("Enter currency name.");
                     decimal exchangeRate = this.Utility.GetDecimalInput("Enter currency exchange rate.");
-                    bool isAdded = this.AdminServices.AddNewCurrency(symbol, name, exchangeRate);
+                    bool isAdded = this._adminService.AddNewCurrency(symbol, name, exchangeRate);
 
-                    if (isAdded) Console.WriteLine("New Currency successfully added");
-                    else Console.WriteLine("Error occurred!, Please try again");
+                    if (isAdded)
+                        Console.WriteLine("New Currency successfully added");
+                    else
+                        Console.WriteLine("Error occurred!, Please try again");
 
                     AdminMenu();
 
@@ -268,10 +296,12 @@ namespace BankApplication
                 case 4:
                     int rtgs = this.Utility.GetIntegerInput("Enter RTGS charges : ");
                     int imps = this.Utility.GetIntegerInput("Enter IMPS charges : ");
-                    bool isUpdated = this.AdminServices.EditSameBankCharges(rtgs, imps);
+                    bool isUpdated = this._adminService.SaveBankCharges(rtgs, imps, true);
 
-                    if(isUpdated) Console.WriteLine("New Charges successfully added");
-                    else Console.WriteLine("Error occurred!, Please try again");
+                    if(isUpdated)
+                        Console.WriteLine("New Charges successfully added");
+                    else
+                        Console.WriteLine("Error occurred!, Please try again");
 
                     AdminMenu();
 
@@ -279,16 +309,18 @@ namespace BankApplication
                 case 5:
                     int rtgs1 = this.Utility.GetIntegerInput("Enter RTGS charges : ");
                     int imps1 = this.Utility.GetIntegerInput("Enter IMPS charges : ");
-                    bool isUpdated1 = this.AdminServices.EditDiffBankCharges(rtgs1, imps1);
+                    bool isUpdated1 = this._adminService.SaveBankCharges(rtgs1, imps1, false);
 
-                    if (isUpdated1) Console.WriteLine("New Charges successfully added");
-                    else Console.WriteLine("Error occurred!, Please try again");
+                    if (isUpdated1)
+                        Console.WriteLine("New Charges successfully added");
+                    else
+                        Console.WriteLine("Error occurred!, Please try again");
 
                     AdminMenu();
 
                     break;
                 case 6:
-                    List<Transaction> transactions = this.AdminServices.DisplayTransactions();
+                    List<Transaction> transactions = this._adminService.GetAllTransactions();
                     bool isSuccessfull = this.DisplayTransactions(transactions);
                     if (isSuccessfull)
                         AdminMenu();
@@ -296,10 +328,12 @@ namespace BankApplication
                     break;
                 case 7:
                     string txnId = this.Utility.GetStringInput("Enter Transaction Id to be revereted.");
-                    bool isRevertedSuccessfully = this.AdminServices.RevertTransaction(txnId);
+                    bool isRevertedSuccessfully = this._adminService.RevertTransaction(txnId);
 
-                    if (isRevertedSuccessfully) Console.WriteLine("Transaction reverted successfully.");
-                    else Console.WriteLine("Error occurred!, Please try again");
+                    if (isRevertedSuccessfully)
+                        Console.WriteLine("Transaction reverted successfully.");
+                    else
+                        Console.WriteLine("Error occurred!, Please try again");
 
                     AdminMenu();
 

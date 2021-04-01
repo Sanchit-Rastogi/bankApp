@@ -21,23 +21,27 @@ namespace BankApp.Services.Utilities
         public int GetIntegerInput(string displayText)
         {
             Console.WriteLine(displayText);
-            int userInput = Convert.ToInt32(Console.ReadLine());
+            string userInput = Console.ReadLine();
 
-            return userInput;
-            //Regex regex = new Regex(@"^\d$");
-            //if (regex.Match()) return userInput;
-            //else
-            //{
-            //    Console.WriteLine("Please enter a valid input !");
-            //    return this.GetIntegerInput(displayText);
-            //}
+            if (Regex.IsMatch(userInput, "[0-9]")) return Convert.ToInt32(userInput);
+            else
+            {
+                Console.WriteLine("Please enter a valid input !");
+                return this.GetIntegerInput(displayText);
+            }
         }
 
         public decimal GetDecimalInput(string displayText)
         {
             Console.WriteLine(displayText);
+            string userInput = Console.ReadLine();
 
-            return Convert.ToInt32(Console.ReadLine());
+            if (Regex.IsMatch(userInput, "^[0-9]+([.,][0-9]{1,2})?$")) return Convert.ToInt32(userInput);
+            else
+            {
+                Console.WriteLine("Please enter a valid input !");
+                return this.GetIntegerInput(displayText);
+            }
         }
     }
 }

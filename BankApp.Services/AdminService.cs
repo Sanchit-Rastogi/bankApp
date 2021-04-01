@@ -7,7 +7,20 @@ using BankApp.Services.Constants;
 
 namespace BankApp.Services
 {
-    public class AdminService
+    public interface IAdminService
+    {
+
+        bool AddNewCurrency(string symbol, string name, decimal exchangeRate);
+
+        bool RevertTransaction(string transactionId);
+
+        List<Transaction> GetAllTransactions();
+
+        bool SaveBankCharges(int rtgs, int imps, bool isSame);
+
+    }
+
+    public class AdminService : IAdminService
     {
         public bool AddNewCurrency(string symbol, string name, decimal exchangeRate)
         {
@@ -42,7 +55,8 @@ namespace BankApp.Services
                     db.AccountHolders.Find(transaction.SourceId).Balance += transaction.Amount;
                     db.AccountHolders.Find(transaction.DestinationId).Balance -= transaction.Amount;
                 }
-                else db.AccountHolders.Find(transaction.SourceId).Balance -= transaction.Amount;
+                else
+                    db.AccountHolders.Find(transaction.SourceId).Balance -= transaction.Amount;
                 
                 db.SaveChanges();
             }
@@ -54,7 +68,7 @@ namespace BankApp.Services
             return true;
         }
 
-        public List<Transaction> DisplayTransactions()
+        public List<Transaction> GetAllTransactions()
         {
             try
             {
@@ -65,17 +79,17 @@ namespace BankApp.Services
             catch (Exception) { return null; }
         }
 
-        public bool EditSameBankCharges(int rtgs, int imps)
+        public bool SaveBankCharges(int rtgs, int imps, bool isSame)
         {
             try
             {
                 var db = new BankDBContext();
                 BankCharge bankCharge = new BankCharge()
                 {
-                    SameBankIMPSCharge = imps,
-                    SameBankRTGSCharge = rtgs,
-                    DifferentBankIMPSCharge = BankConstants.BankCharges.DifferentBankIMPSCharge,
-                    DifferentBankRTGSCharge = BankConstants.BankCharges.DifferentBankRTGSCharge,
+                    SameBankIMPS = isSame ? imps : BankConstants.BankCharges.SameBankIMPS,
+                    SameBankRTGS = isSame ? rtgs : BankConstants.BankCharges.SameBankRTGS,
+                    DifferentBankIMPS = isSame ? BankConstants.BankCharges.DifferentBankIMPS : imps,
+                    DifferentBankRTGS = isSame ? BankConstants.BankCharges.DifferentBankRTGS : rtgs,
                 };
                 db.BankCharges.Add(bankCharge);
                 db.SaveChanges();
@@ -84,27 +98,6 @@ namespace BankApp.Services
             }
             catch (Exception) { return false; }
         }
-
-        public bool EditDiffBankCharges(int rtgs, int imps)
-        {
-            try
-            {
-                var db = new BankDBContext();
-                BankCharge bankCharge = new BankCharge()
-                {
-                    SameBankIMPSCharge = BankConstants.BankCharges.SameBankIMPSCharge,
-                    SameBankRTGSCharge = BankConstants.BankCharges.SameBankRTGSCharge,
-                    DifferentBankIMPSCharge = imps,
-                    DifferentBankRTGSCharge = rtgs,
-                };
-                db.BankCharges.Add(bankCharge);
-                db.SaveChanges();
-
-                return true;
-            }
-            catch (Exception) { return false; }
-        }
-
         
     }
 }

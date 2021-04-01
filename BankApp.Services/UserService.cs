@@ -1,23 +1,31 @@
 ﻿using System;
 using BankApp.Models;
-using System.Collections.Generic;
 using BankApp.Services.Data;
 using System.Linq;
 
 namespace BankApp.Services
 {
-    public class UserService
+    public interface IUserService
+    {
+        string LoginUser(User inputUser);
+
+        bool RegisterUser(string role, User inputUser);
+
+        bool DeleteAccount(string accountId);
+    }
+
+    public class UserService : IUserService
     {
 
         public string LoginUser(User inputUser)
         {
             try
             {
-                using var db = new BankDBContext();
-                var accHolder = from acc in db.AccountHolders
+                var db = new BankDBContext();
+                var accountHolder = from acc in db.AccountHolders
                                 where acc.User.Name == inputUser.Name && acc.User.Password == inputUser.Password
                                 select acc;
-                if (accHolder != null) return "Account_Holder";
+                if (accountHolder != null) return "Account_Holder";
                 else
                 {
                     var employee = from emp in db.Employees
@@ -107,5 +115,6 @@ namespace BankApp.Services
 
             return true;
         }
+
     }
 }

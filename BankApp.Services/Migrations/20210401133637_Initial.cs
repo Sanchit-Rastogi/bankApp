@@ -13,10 +13,10 @@ namespace BankApp.Services.Migrations
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    SameBankRTGSCharge = table.Column<int>(type: "int", nullable: false),
-                    SameBankIMPSCharge = table.Column<int>(type: "int", nullable: false),
-                    DifferentBankRTGSCharge = table.Column<int>(type: "int", nullable: false),
-                    DifferentBankIMPSCharge = table.Column<int>(type: "int", nullable: false)
+                    SameBankRTGS = table.Column<int>(type: "int", nullable: false),
+                    SameBankIMPS = table.Column<int>(type: "int", nullable: false),
+                    DifferentBankRTGS = table.Column<int>(type: "int", nullable: false),
+                    DifferentBankIMPS = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -34,7 +34,8 @@ namespace BankApp.Services.Migrations
                     Amount = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
                     TxnDate = table.Column<DateTime>(type: "datetime2", nullable: false),
                     SourceId = table.Column<int>(type: "int", nullable: false),
-                    DestinationId = table.Column<int>(type: "int", nullable: false)
+                    DestinationId = table.Column<int>(type: "int", nullable: false),
+                    IsRevereted = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -130,16 +131,25 @@ namespace BankApp.Services.Migrations
                 name: "Employees",
                 columns: table => new
                 {
-                    EmployeeId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    UserId = table.Column<int>(type: "int", nullable: true),
+                    EmployeeId = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     BankId = table.Column<string>(type: "nvarchar(450)", nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Employees", x => x.EmployeeId);
+                    table.PrimaryKey("PK_Employees", x => x.Id);
                     table.ForeignKey(
                         name: "FK_Employees_Banks_BankId",
                         column: x => x.BankId,
                         principalTable: "Banks",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_Employees_User_UserId",
+                        column: x => x.UserId,
+                        principalTable: "User",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                 });
@@ -168,6 +178,11 @@ namespace BankApp.Services.Migrations
                 name: "IX_Employees_BankId",
                 table: "Employees",
                 column: "BankId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Employees_UserId",
+                table: "Employees",
+                column: "UserId");
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)
@@ -185,10 +200,10 @@ namespace BankApp.Services.Migrations
                 name: "Transactions");
 
             migrationBuilder.DropTable(
-                name: "User");
+                name: "Banks");
 
             migrationBuilder.DropTable(
-                name: "Banks");
+                name: "User");
 
             migrationBuilder.DropTable(
                 name: "BankCharges");
