@@ -12,5 +12,8 @@ namespace BankApp.Services.Constants
             DifferentBankIMPSCharge = 6,
             DifferentBankRTGSCharge = 2,
         };
+
+        public static string ConnectionString = "Data Source=.;Initial Catalog=BankAppDB;user=sa;password=Sanchit123@sql#;Trusted_Connection=false";
+
     }
 }

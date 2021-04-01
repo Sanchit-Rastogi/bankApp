@@ -17,5 +17,7 @@ namespace BankApp.Models
         public int SourceId { get; set; }
 
         public int DestinationId { get; set; }
+
+        public bool IsRevereted { get; set; }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using System;
 using BankApp.Models;
+using BankApp.Services.Constants;
 using Microsoft.EntityFrameworkCore;
 
 namespace BankApp.Services.Data
@@ -12,7 +13,7 @@ namespace BankApp.Services.Data
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseSqlServer("Data Source=.;Initial Catalog=BankAppDB;user=sa;password=Sanchit123@sql#;Trusted_Connection=false");
+            optionsBuilder.UseSqlServer(BankConstants.ConnectionString);
             base.OnConfiguring(optionsBuilder);
         }
 

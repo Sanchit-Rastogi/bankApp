@@ -9,53 +9,48 @@ namespace BankApp.Services
 {
     public class AdminService
     {
-        public bool AddNewCurrency(string sym, string name, decimal xchRate)
+        public bool AddNewCurrency(string symbol, string name, decimal exchangeRate)
         {
-            if (xchRate == 0) return false;
-            if (name.Length < 3 || sym.Length != 3) return false;
+            if (exchangeRate == 0) return false;
+            if (name.Length < 3 || symbol.Length != 3) return false;
 
             Currency currency = new Currency()
             {
-                Symbol = sym,
+                Symbol = symbol,
                 Name = name,
-                ExchangeRate = xchRate,
+                ExchangeRate = exchangeRate,
                 IsDefault = false,
             };
 
-            using var db = new BankDBContext();
+            var db = new BankDBContext();
             db.Currencies.Add(currency);
             db.SaveChanges();
 
             return true;
         }
 
-        public bool DeleteAccount(string accId)
+        public bool RevertTransaction(string transactionId)
         {
             try
             {
-                using var db = new BankDBContext();
-                db.AccountHolders.Remove(db.AccountHolders.SingleOrDefault(acc => acc.AccId == accId));
-                db.SaveChanges();
-            }
-            catch (Exception)
-            {
-                return false;
-            }
-            return true;
-        }
+                var db = new BankDBContext();
+                var transaction = db.Transactions.SingleOrDefault(txn => txn.TxnId == transactionId);
+                if (transaction == null || transaction.IsRevereted == true) return false;
 
-        public bool RevertTransaction(string txnId)
-        {
-            try
-            {
-                using var db = new BankDBContext();
-                db.Transactions.Remove(db.Transactions.SingleOrDefault(txn => txn.TxnId == txnId));
+                db.Transactions.Find(transactionId).IsRevereted = true;
+                if (transaction.SourceId != transaction.DestinationId) {
+                    db.AccountHolders.Find(transaction.SourceId).Balance += transaction.Amount;
+                    db.AccountHolders.Find(transaction.DestinationId).Balance -= transaction.Amount;
+                }
+                else db.AccountHolders.Find(transaction.SourceId).Balance -= transaction.Amount;
+                
                 db.SaveChanges();
             }
             catch (Exception)
             {
                 return false;
             }
+
             return true;
         }
 
@@ -63,9 +58,9 @@ namespace BankApp.Services
         {
             try
             {
-                using var db = new BankDBContext();
-                return (from txn in db.Transactions
-                        select txn).ToList();
+                var db = new BankDBContext();
+                return (from transaction in db.Transactions
+                        select transaction).ToList();
             }
             catch (Exception) { return null; }
         }
@@ -74,7 +69,7 @@ namespace BankApp.Services
         {
             try
             {
-                using var db = new BankDBContext();
+                var db = new BankDBContext();
                 BankCharge bankCharge = new BankCharge()
                 {
                     SameBankIMPSCharge = imps,
@@ -94,7 +89,7 @@ namespace BankApp.Services
         {
             try
             {
-                using var db = new BankDBContext();
+                var db = new BankDBContext();
                 BankCharge bankCharge = new BankCharge()
                 {
                     SameBankIMPSCharge = BankConstants.BankCharges.SameBankIMPSCharge,
@@ -110,61 +105,6 @@ namespace BankApp.Services
             catch (Exception) { return false; }
         }
 
-        public bool RegisterUser(string role, User inputUser)
-        {
-            if (role == "AH")
-            {
-                AccountHolder accountHolder = new AccountHolder();
-                accountHolder.User.Name = inputUser.Name;
-                accountHolder.User.Password = inputUser.Password;
-                accountHolder.User.Username = inputUser.Username;
-                accountHolder.AccId = "AH" + inputUser.Name[..3] + DateTime.Now.ToLongDateString();
-                try
-                {
-                    using var db = new BankDBContext();
-                    var accHolder = from acc in db.AccountHolders
-                                    where acc.User.Name == inputUser.Name && acc.User.Password == inputUser.Password
-                                    select acc;
-                    if (accHolder != null) return true;
-                    else
-                    {
-                        db.AccountHolders.Add(accountHolder);
-                        db.SaveChanges();
-                        return true;
-                    }
-                }
-                catch (Exception)
-                {
-                    return false;
-                }
-            }
-            else
-            {
-                Employee loginEmployee = new Employee();
-                loginEmployee.User.Name = inputUser.Name;
-                loginEmployee.User.Username = inputUser.Username;
-                loginEmployee.User.Password = inputUser.Password;
-                loginEmployee.EmployeeId = "EMP" + inputUser.Name[..3] + DateTime.Now.ToLongDateString();
-
-                try
-                {
-                    using var db = new BankDBContext();
-                    var employee = from emp in db.Employees
-                                   where emp.User.Name == inputUser.Name && emp.User.Password == inputUser.Password
-                                   select emp;
-                    if (employee != null) return true;
-                    else
-                    {
-                        db.Employees.Add(loginEmployee);
-                        db.SaveChanges();
-                        return true;
-                    }
-                }
-                catch (Exception)
-                {
-                    return false;
-                }
-            }
-        }
+        
     }
 }
