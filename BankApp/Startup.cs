@@ -1,6 +1,7 @@
 ﻿using System;
 using Microsoft.Extensions.DependencyInjection;
 using BankApp.Services;
+using BankApp.Interfaces;
 
 namespace BankApp
 {
@@ -11,7 +12,6 @@ namespace BankApp
         {
             var provider = new ServiceCollection()
                 .AddSingleton<IBankService, BankService>()
-                .AddSingleton<IBankApp, BankApplication>()
                 .AddSingleton<IAccountService, AccountService>()
                 .AddSingleton<IAdminService, AdminService>()
                 .AddSingleton<IUserService, UserService>()

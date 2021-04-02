@@ -4,22 +4,11 @@ using BankApp.Models;
 using System.Collections.Generic;
 using BankApp.Services.Utilities;
 using BankApp.Services.Constants;
+using BankApp.Interfaces;
 
 namespace BankApp
 {
-    public interface IBankApp
-    {
-        void Initialize();
-        void DisplayMainMenu();
-        User GetUserDetails();
-        void AccountHolderMenu();
-        bool DisplayTransactions(List<Transaction> transactions);
-        void TransferFundsMenu();
-        void RegisterMenu();
-        void AdminMenu();
-    }
-
-    public class BankApplication : IBankApp
+    public class BankApplication
     {
         Utility Utility;
         User LoggedInUser;
@@ -44,50 +33,58 @@ namespace BankApp
 
         public void Initialize()
         {
+            Startup.ConfigurationService();
             this.Utility = new Utility();
             this.LoggedInUser = new User();
-            DisplayMainMenu();
+            MainMenu();
         }
 
-        public void DisplayMainMenu()
+        public void MainMenu()
         {
-            int option = this.Utility.GetIntegerInput("Welcome to The Bank Application Project \n \n" +
-                " Please enter option from the list :- \n " +
-                "1. Create a Bank \n 2. Login \n 3. Exit");
+            Console.WriteLine(BankConstants.MainMenuOptions);
+
+            BankConstants.MenuOptions option = (BankConstants.MenuOptions) this.Utility.GetIntegerInput(" Please enter option from the list :- \n ");
             switch (option)
             {
-                case 1:
+                case BankConstants.MenuOptions.RegisterBank:
                     Console.WriteLine("*** Registereing a new bank *** ");
                     string name = this.Utility.GetStringInput("Enter your bank name : ");
-                    //bool isRegistered = this.BankServices.RegisterBank(name);
                     bool isRegistered = this._bankService.RegisterBank(name);
                     if (isRegistered) {
                         Console.WriteLine("New Bank Successfully Created.");
-                        DisplayMainMenu();
+                        MainMenu();
                     }
 
                     break;
-                case 2:
+                case BankConstants.MenuOptions.Login:
                     var user = this.GetUserDetails();
-                    string loggedInStatus = this._userService.LoginUser(user);
-                    if (loggedInStatus == "AccountHolder") {
+                    BankConstants.LoginStatus loggedInStatus = this._userService.LoginUser(user);
+                    if (loggedInStatus == BankConstants.LoginStatus.AccountHolder) {
                         this.LoggedInUser = user;
-                        AccountHolderMenu();
+                        this.AccountHolderMenu();
                     }
-                    else if (loggedInStatus == "Employee") {
+                    else if (loggedInStatus == BankConstants.LoginStatus.Employee) {
                         this.LoggedInUser = user;
-
+                        this.AdminMenu();
                     }
-                    else Console.WriteLine("Login error ! Please try again.");
+                    else if (loggedInStatus == BankConstants.LoginStatus.UserNotFound) {
+                        Console.WriteLine("Login error ! User not found.");
+                        MainMenu();
+                    }
+                    else
+                    {
+                        Console.WriteLine("Login error ! Please try again.");
+                        MainMenu();
+                    }
 
                     break;
-                case 3:
+                case BankConstants.MenuOptions.Exit:
                     Environment.Exit(0);
 
                     break;
                 default:
                     Console.WriteLine("Please select a valid option !!");
-                    DisplayMainMenu();
+                    MainMenu();
 
                     break;
             }
@@ -106,15 +103,10 @@ namespace BankApp
         public void AccountHolderMenu()
         {
             Console.Clear();
-            int option = this.Utility.GetIntegerInput("Hi! Welcome to the Account Holder menu :- \n " +
-                "1. Deposite Money. \n " +
-                "2. Withdraw Money \n " +
-                "3. Transfer Funds \n " +
-                "4. View Transaction History \n " +
-                "5. Logout");
+            BankConstants.AccountHolderOptions option = (BankConstants.AccountHolderOptions)this.Utility.GetIntegerInput(BankConstants.AccountHolderMenuOptions);
             switch (option)
             {
-                case 1:
+                case BankConstants.AccountHolderOptions.Deposite:
                     decimal depositeAmount = this.Utility.GetDecimalInput("Enter amount to be deposited :- ");
                     bool isDeposited = this._accountService.Deposite(depositeAmount, this.LoggedInUser.Id);
                     if (isDeposited)
@@ -125,7 +117,7 @@ namespace BankApp
                     this.AccountHolderMenu();
 
                     break;
-                case 2:
+                case BankConstants.AccountHolderOptions.Withdraw:
                     decimal withdrawalAmount = this.Utility.GetDecimalInput("Enter amount to be withdrawn :- ");
                     string note = this.Utility.GetStringInput("Enter note for withdrawl :- ");
                     bool isWithdrawn = this._accountService.Withdrawal(withdrawalAmount, this.LoggedInUser.Id, note);
@@ -137,19 +129,19 @@ namespace BankApp
                     this.AccountHolderMenu();
 
                     break;
-                case 3:
+                case BankConstants.AccountHolderOptions.Transfer:
                     this.TransferFundsMenu();
 
                     break;
-                case 4:
+                case BankConstants.AccountHolderOptions.Transactions:
                     List<Transaction> transactions = this._accountService.GetTransactions(this.LoggedInUser.Id);
                     bool isSuccessfull = DisplayTransactions(transactions);
                     if (isSuccessfull)
                         AccountHolderMenu();
 
                     break;
-                case 5:
-                    DisplayMainMenu();
+                case BankConstants.AccountHolderOptions.Logout:
+                    MainMenu();
 
                     break;
                 default:
@@ -177,31 +169,26 @@ namespace BankApp
         public void TransferFundsMenu()
         {
             Console.Clear();
-            int option = this.Utility.GetIntegerInput("Please select a tranfer option :- \n " +
-                "1. Same bank RTGS transfer. \n " +
-                "2. Same bank IMPS transfer. \n " +
-                "3. Other bank RTGS transfer. \n " +
-                "4. Other bank IMPS transfer \n " +
-                "5. Go back.");
+            BankConstants.TransferMenuOptions option = (BankConstants.TransferMenuOptions)this.Utility.GetIntegerInput(BankConstants.TransferFundsMenuOptions);
             int destinationAccountNumber = this.Utility.GetIntegerInput("Enter reciver account number.");
             decimal amount = this.Utility.GetDecimalInput("Enter amount to be tranfered.");
             string note = this.Utility.GetStringInput("Enter transfer note.");
             bool isTransfered = false;
             switch (option)
             {
-                case 1:
+                case BankConstants.TransferMenuOptions.SameRTGS:
                     isTransfered = this._accountService.Transfer(this.LoggedInUser.Id, destinationAccountNumber, amount, note, BankConstants.BankCharges.SameBankRTGS);
 
                     break;
-                case 2:
+                case BankConstants.TransferMenuOptions.SameIMPS:
                     isTransfered = this._accountService.Transfer(this.LoggedInUser.Id, destinationAccountNumber, amount, note, BankConstants.BankCharges.SameBankIMPS);
 
                     break;
-                case 3:
+                case BankConstants.TransferMenuOptions.DIffRTGS:
                     isTransfered = this._accountService.Transfer(this.LoggedInUser.Id, destinationAccountNumber, amount, note, BankConstants.BankCharges.DifferentBankRTGS);
 
                     break;
-                case 4:
+                case BankConstants.TransferMenuOptions.DiffTMPS:
                     isTransfered = this._accountService.Transfer(this.LoggedInUser.Id, destinationAccountNumber, amount, note, BankConstants.BankCharges.DifferentBankIMPS);
 
                     break;
@@ -222,21 +209,19 @@ namespace BankApp
         public void RegisterMenu()
         {
             Console.Clear();
-            int option = this.Utility.GetIntegerInput("Please select an account type :- \n" +
-               " 1. Account holder account \n " +
-               " 2. Employee account. \n " +
-               " 3. Go Back");
+            BankConstants.RegisterOptionsMenu option = (BankConstants.RegisterOptionsMenu)this.Utility.GetIntegerInput(BankConstants.RegisterMenuOptions);
             bool isRegistered = false;
+            User registerUser = new User(); 
             switch (option)
             {
-                case 1:
-                    this.GetUserDetails();
-                    isRegistered = this._userService.RegisterUser("AH", this.LoggedInUser);
+                case BankConstants.RegisterOptionsMenu.AccountHolder:
+                    registerUser = this.GetUserDetails();
+                    isRegistered = this._userService.RegisterAccountHolder(registerUser);
 
                     break;
-                case 2:
-                    this.GetUserDetails();
-                    isRegistered = this._userService.RegisterUser("EMP", this.LoggedInUser);
+                case BankConstants.RegisterOptionsMenu.Employee:
+                    registerUser = this.GetUserDetails();
+                    isRegistered = this._userService.RegisterEmployee(registerUser);
 
                     break;
                 default:
@@ -245,7 +230,10 @@ namespace BankApp
                     break;
             }
             if (isRegistered)
+            {
                 Console.WriteLine("User successfully registered");
+                this.LoggedInUser = registerUser;
+            }
             else
                 Console.WriteLine("Error occured ! Please try again.");
 
@@ -255,21 +243,14 @@ namespace BankApp
         public void AdminMenu()
         {
             Console.Clear();
-            int option = this.Utility.GetIntegerInput("Hi! Welcome to the bank staff menu :- \n" +
-                " 1. Create a new account. \n " +
-                " 2. Update/Delete account. \n " +
-                " 3. Add new currency. \n " +
-                " 4. Add service charges for this bank. \n " +
-                " 5. Add service charge for other bank. \n " +
-                " 6. View transactions history. \n " +
-                " 7. Revert a transaction.");
+            BankConstants.AdminOptionsMenu option = (BankConstants.AdminOptionsMenu)this.Utility.GetIntegerInput(BankConstants.AdminMenuOptions);
             switch (option)
             {
-                case 1:
+                case BankConstants.AdminOptionsMenu.Register:
                     RegisterMenu();
 
                     break;
-                case 2:
+                case BankConstants.AdminOptionsMenu.DeleteAccount:
                     string accId = this.Utility.GetStringInput("Enter Transaction Id to be revereted.");
                     bool isDeletedSuccessfully = this._userService.DeleteAccount(accId);
 
@@ -279,7 +260,7 @@ namespace BankApp
                         Console.WriteLine("Error occurred!, Please try again");
 
                     break;
-                case 3:
+                case BankConstants.AdminOptionsMenu.NewCurrency:
                     string symbol = this.Utility.GetStringInput("Enter currency symbol.");
                     string name = this.Utility.GetStringInput("Enter currency name.");
                     decimal exchangeRate = this.Utility.GetDecimalInput("Enter currency exchange rate.");
@@ -293,7 +274,7 @@ namespace BankApp
                     AdminMenu();
 
                     break;
-                case 4:
+                case BankConstants.AdminOptionsMenu.SameBankService:
                     int rtgs = this.Utility.GetIntegerInput("Enter RTGS charges : ");
                     int imps = this.Utility.GetIntegerInput("Enter IMPS charges : ");
                     bool isUpdated = this._adminService.SaveBankCharges(rtgs, imps, true);
@@ -306,7 +287,7 @@ namespace BankApp
                     AdminMenu();
 
                     break;
-                case 5:
+                case BankConstants.AdminOptionsMenu.DiffBankService:
                     int rtgs1 = this.Utility.GetIntegerInput("Enter RTGS charges : ");
                     int imps1 = this.Utility.GetIntegerInput("Enter IMPS charges : ");
                     bool isUpdated1 = this._adminService.SaveBankCharges(rtgs1, imps1, false);
@@ -319,14 +300,14 @@ namespace BankApp
                     AdminMenu();
 
                     break;
-                case 6:
+                case BankConstants.AdminOptionsMenu.Transactions:
                     List<Transaction> transactions = this._adminService.GetAllTransactions();
                     bool isSuccessfull = this.DisplayTransactions(transactions);
                     if (isSuccessfull)
                         AdminMenu();
 
                     break;
-                case 7:
+                case BankConstants.AdminOptionsMenu.RevertTransactions:
                     string txnId = this.Utility.GetStringInput("Enter Transaction Id to be revereted.");
                     bool isRevertedSuccessfully = this._adminService.RevertTransaction(txnId);
 

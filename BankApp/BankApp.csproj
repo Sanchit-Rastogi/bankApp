@@ -8,6 +8,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Models\BankApp.Models.csproj" />
     <ProjectReference Include="..\BankApp.Services\BankApp.Services.csproj" />
+    <ProjectReference Include="..\BankApp.Interfaces\BankApp.Interfaces.csproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="5.0.1" />

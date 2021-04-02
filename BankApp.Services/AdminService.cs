@@ -4,21 +4,10 @@ using BankApp.Services.Data;
 using System.Linq;
 using System.Collections.Generic;
 using BankApp.Services.Constants;
+using BankApp.Interfaces;
 
 namespace BankApp.Services
-{
-    public interface IAdminService
-    {
-
-        bool AddNewCurrency(string symbol, string name, decimal exchangeRate);
-
-        bool RevertTransaction(string transactionId);
-
-        List<Transaction> GetAllTransactions();
-
-        bool SaveBankCharges(int rtgs, int imps, bool isSame);
-
-    }
+{ 
 
     public class AdminService : IAdminService
     {

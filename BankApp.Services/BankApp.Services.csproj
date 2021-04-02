@@ -6,6 +6,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Models\BankApp.Models.csproj" />
+    <ProjectReference Include="..\BankApp.Interfaces\BankApp.Interfaces.csproj" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="BankDb\" />

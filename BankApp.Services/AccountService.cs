@@ -3,19 +3,10 @@ using System.Collections.Generic;
 using BankApp.Models;
 using BankApp.Services.Data;
 using System.Linq;
+using BankApp.Interfaces;
 
 namespace BankApp.Services
 {
-    public interface IAccountService
-    {
-        bool Deposite(decimal amount, int sourceAccountNumber);
-
-        bool Withdrawal(decimal amount, int sourceAccountNumber, string note);
-
-        List<Transaction> GetTransactions(int id);
-
-        bool Transfer(int sourceId, int destinationId, decimal amount, string note, int charge);
-    }
 
     public class AccountService : IAccountService
     {

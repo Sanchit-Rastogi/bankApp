@@ -1,16 +1,12 @@
-﻿using BankApp;
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 
-namespace BankApplication
+namespace BankApp
 {
     class Program
     {
         static void Main(string[] args)
         {
-            var container = Startup.ConfigurationService();
-            var BankApp = container.GetRequiredService<IBankApp>();
-
-            BankApp.Initialize();
+            new BankApplication();
         }
     }
 }
